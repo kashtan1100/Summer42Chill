@@ -1,12 +1,12 @@
 export default class Game {
     static points = {
-        '1': 40,
-        '2': 100,
-        '3': 300,
-        '4': 1200
+        "1": 40,
+        "2": 100,
+        "3": 300,
+        "4": 1200,
     };
 
-    constructor () {
+    constructor() {
         this.reset();
     }
 
@@ -15,12 +15,11 @@ export default class Game {
     }
 
     getState() {
-        const playfield = this.createPlayfield();
+        const playfield = this.createPlayField();
         const { y: pieceY, x: pieceX, blocks } = this.activePiece;
 
         for (let y = 0; y < this.playfield.length; y++) {
             playfield[y] = [];
-
             for (let x = 0; x < this.playfield[y].length; x++) {
                 playfield[y][x] = this.playfield[y][x];
             }
@@ -29,7 +28,7 @@ export default class Game {
         for (let y = 0; y < blocks.length; y++) {
             for (let x = 0; x < blocks[y].length; x++) {
                 if (blocks[y][x]) {
-                    playfield[pieceY + y][pieceX + x] = this.activePiece.blocks[y][x];
+                    playfield[pieceY + y][pieceX + x] = blocks[y][x];
                 }
             }
         }
@@ -40,92 +39,89 @@ export default class Game {
             lines: this.lines,
             nextPiece: this.nextPiece,
             playfield,
-            isGameOver: this.topOut
+            isGameOver: this.topOut,
         };
     }
 
     reset() {
         this.score = 0;
         this.lines = 0;
-        this.topOut =  false;
-        this.playfield = this.createPlayfield();
+        this.topOut = false;
+        this.playfield = this.createPlayField();
         this.activePiece = this.createPiece();
         this.nextPiece = this.createPiece();
     }
 
-    createPlayfield() {
+    createPlayField() {
         const playfield = [];
-
         for (let y = 0; y < 20; y++) {
             playfield[y] = [];
-
             for (let x = 0; x < 10; x++) {
                 playfield[y][x] = 0;
             }
         }
-
-        return playfield
+        return playfield;
     }
 
     createPiece() {
         const index = Math.floor(Math.random() * 7);
-        const type = 'IJLOSTZ'[index];
-        const piece = { };
+        const type = "IJLOSTZ"[index];
+        const piece = {};
 
         switch (type) {
-            case 'I':
+            case "I":
                 piece.blocks = [
                     [0, 0, 0, 0],
                     [1, 1, 1, 1],
                     [0, 0, 0, 0],
-                    [0, 0, 0, 0]
+                    [0, 0, 0, 0],
                 ];
                 break;
-            case 'J':
+            case "J":
                 piece.blocks = [
                     [0, 0, 0],
                     [2, 2, 2],
-                    [0, 0, 2]
+                    [0, 0, 2],
                 ];
                 break;
-            case 'L':
+            case "L":
                 piece.blocks = [
                     [0, 0, 0],
                     [3, 3, 3],
-                    [3, 0, 0]
+                    [3, 0, 0],
                 ];
                 break;
-            case 'O':
+            case "O":
                 piece.blocks = [
                     [0, 0, 0, 0],
                     [0, 4, 4, 0],
                     [0, 4, 4, 0],
-                    [0, 0, 0, 0]
+                    [0, 0, 0, 0],
                 ];
                 break;
-            case 'S':
+            case "S":
                 piece.blocks = [
                     [0, 0, 0],
                     [0, 5, 5],
-                    [5, 5, 0]
+                    [5, 5, 0],
                 ];
                 break;
-            case 'T':
+            case "T":
                 piece.blocks = [
                     [0, 0, 0],
                     [6, 6, 6],
-                    [0, 6, 0]
+                    [0, 6, 0],
                 ];
                 break;
-            case 'Z':
+            case "Z":
                 piece.blocks = [
                     [0, 0, 0],
                     [7, 7, 0],
-                    [0, 7, 7]
+                    [0, 7, 7],
                 ];
                 break;
             default:
-                throw new Error('Unknown piece type');
+                throw new Error("Неизвестный тип фигуры");
         }
 
         piece.x = Math.floor((10 - piece.blocks[0].length) / 2);
@@ -135,18 +131,35 @@ export default class Game {
     }
 
     movePieceLeft() {
-        this.activePiece.x -=1;
+        this.activePiece.x -= 1;
 
         if (this.hasCollision()) {
-            this.activePiece.x +=1;
+            this.activePiece.x += 1;
         }
     }
 
     movePieceRight() {
-        this.activePiece.x +=1;
+        this.activePiece.x += 1;
+        if (this.hasCollision()) {
+            this.activePiece.x -= 1;
+        }
+    }
+
+    movePieceDown() {
+        if (this.topOut) return;
+
+        this.activePiece.y += 1;
 
         if (this.hasCollision()) {
-            this.activePiece.x -=1;
+            this.activePiece.y -= 1;
+            this.lockPiece();
+            const clearedLines = this.clearLines();
+            this.updateScore(clearedLines);
+            this.updatePieces();
+        }
+
+        if (this.hasCollision()) {
+            this.topOut = true;
         }
     }
 
@@ -183,40 +196,23 @@ export default class Game {
         }
     }
 
-    movePieceDown() {
-        if (this.topOut) return;
-
-        this.activePiece.y +=1;
-
-        if (this.hasCollision()) {
-            this.activePiece.y -=1;
-            this.lockPiece();
-            const clearedLines = this.clearLines();
-            this.updateScore(clearedLines);
-            this.updatePieces();
-        }
-
-        if (this.hasCollision()) {
-            this.topOut = true;
-        }
-    }
-
     hasCollision() {
         const { y: pieceY, x: pieceX, blocks } = this.activePiece;
 
         for (let y = 0; y < blocks.length; y++) {
             for (let x = 0; x < blocks[y].length; x++) {
                 if (
-                    blocks[y][x] && 
-                    ((this.playfield[pieceY + y] === undefined || this.playfield[pieceY + y][pieceX + x] === undefined) || 
-                    this.playfield[pieceY + y][pieceX + x])
-                    ) {
-                        return true;
+                    blocks[y][x] &&
+                    (this.playfield[pieceY + y] === undefined ||
+                        this.playfield[pieceY + y][pieceX + x] === undefined ||
+                        this.playfield[pieceY + y][pieceX + x])
+                ) {
+                    return true;
                 }
             }
         }
 
-        return false
+        return false;
     }
 
     lockPiece() {
@@ -238,7 +234,6 @@ export default class Game {
 
         for (let y = rows - 1; y >= 0; y--) {
             let numberOfBlocks = 0;
-
             for (let x = 0; x < columns; x++) {
                 if (this.playfield[y][x]) {
                     numberOfBlocks += 1;
@@ -266,6 +261,7 @@ export default class Game {
         if (clearedLines > 0) {
             this.score += Game.points[clearedLines] * (this.level + 1);
             this.lines += clearedLines;
+            console.log(this.score, this.lines, this.level);
         }
     }
 

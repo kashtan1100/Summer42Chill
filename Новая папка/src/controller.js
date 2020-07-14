@@ -3,10 +3,10 @@ export default class Controller {
         this.game = game;
         this.view = view;
         this.intervalId = null;
-        this.isPaying = false;
+        this.isPlaying = false;
 
-        document.addEventListener('keydown', this.handleKeyDown.bind(this));
-        document.addEventListener('keyup', this.handleKeyUp.bind(this));
+        document.addEventListener("keydown", this.handleKeyDown.bind(this));
+        document.addEventListener("keyup", this.handleKeyUp.bind(this));
 
         this.view.renderStartScreen();
     }
@@ -17,13 +17,13 @@ export default class Controller {
     }
 
     play() {
-        this.isPaying = true;
+        this.isPlaying = true;
         this.startTimer();
         this.updateView();
     }
 
     pause() {
-        this.isPaying = false;
+        this.isPlaying = false;
         this.stopTimer();
         this.updateView();
     }
@@ -35,13 +35,12 @@ export default class Controller {
 
     updateView() {
         const state = this.game.getState();
-
         if (state.isGameOver) {
             this.view.renderEndScreen(state);
-        } else if (this.isPaying) {
-            this.view.renderMainScreen(state);
-        } else {
+        } else if (!this.isPlaying) {
             this.view.renderPauseScreen();
+        } else {
+            this.view.renderMainScreen(state);
         }
     }
 
@@ -49,9 +48,12 @@ export default class Controller {
         const speed = 1000 - this.game.getState().level * 100;
 
         if (!this.intervalId) {
-            this.intervalId = setInterval(() => {
-                this.update();
-            }, speed > 0 ? speed : 100);
+            this.intervalId = setInterval(
+                () => {
+                    this.update();
+                },
+                speed > 0 ? speed : 100
+            );
         }
     }
 
@@ -66,28 +68,28 @@ export default class Controller {
         const state = this.game.getState();
 
         switch (event.keyCode) {
-            case 13: // ENTER
+            case 13: //Enter
                 if (state.isGameOver) {
                     this.reset();
-                } else if (this.isPaying) {
+                } else if (this.isPlaying) {
                     this.pause();
                 } else {
                     this.play();
                 }
                 break;
-            case 37: // LEFT ARROW
+            case 37: //Left arrow
                 this.game.movePieceLeft();
                 this.updateView();
                 break;
-            case 38: // UP ARROW
+            case 38: // Up arrow
                 this.game.rotatePiece();
                 this.updateView();
                 break;
-            case 39: // RIGTH ARROW
+            case 39: // Right arrow
                 this.game.movePieceRight();
                 this.updateView();
                 break;
-            case 40: // DOWN ARROW
+            case 40: //Down arrow
                 this.stopTimer();
                 this.game.movePieceDown();
                 this.updateView();
@@ -96,13 +98,10 @@ export default class Controller {
     }
 
     handleKeyUp(event) {
-        const state = this.game.getState();
-
         switch (event.keyCode) {
-            case 40: // DOWN ARROW
+            case 40: //Down arrow
                 this.startTimer();
                 break;
         }
     }
 }
-
